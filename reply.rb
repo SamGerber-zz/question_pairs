@@ -71,4 +71,32 @@ class Reply
       reply.reply_id == self.id
     end
   end
+
+  def save
+    id ? save_update : save_insert
+  end
+
+  def save_insert
+    QuestionsDatabase.instance.execute(<<-SQL, question_id, user_id, reply_id, body)
+      INSERT INTO
+        replies ( question_id, user_id, reply_id, body )
+      VALUES
+        (?, ?, ?)
+    SQL
+    self.id = QuestionsDatabase.instance.last_insert_row_id
+  end
+
+  def save_update
+    QuestionsDatabase.instance.execute(<<-SQL, question_id, user_id, reply_id, body, id)
+      UPDATE
+        replies
+      SET
+        question_id = ?,
+        user_id = ?,
+        reply_id = ?,
+        body = ?
+      WHERE
+        replies.id = ?
+    SQL
+  end
 end

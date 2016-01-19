@@ -62,8 +62,34 @@ class User
       LEFT OUTER JOIN
         question_likes ON questions.id = question_likes.question_id
       WHERE
-        questions.author_id = id;
+        questions.author_id = #{id};
     SQL
     data.first['karma']
+  end
+
+  def save
+    id ? save_update : save_insert
+  end
+
+  def save_insert
+    QuestionsDatabase.instance.execute(<<-SQL, fname, lname)
+      INSERT INTO
+        users ( fname, lname )
+      VALUES
+        (?, ?)
+    SQL
+    self.id = QuestionsDatabase.instance.last_insert_row_id
+  end
+
+  def save_update
+    QuestionsDatabase.instance.execute(<<-SQL, fname, lname, id)
+      UPDATE
+        users
+      SET
+        fname = ?,
+        lname = ?
+      WHERE
+        users.id = ?
+    SQL
   end
 end
