@@ -48,4 +48,22 @@ class Question
   def followers
     QuestionFollow.followers_for_question_id( id )
   end
+
+  def self.most_followed(n)
+    QuestionFollow.most_followed_questions(n)
+    #Maybe make array of Question elements
+  end
+
+  def self.most_liked(n)
+    QuestionFollow.most_liked_questions(n)
+    #Maybe make array of Question elements
+  end
+
+  def likers
+    QuestionLike.likers_for_question_id(id)
+  end
+
+  def num_likes
+    QuestionLike.num_likes_for_question_id(id)
+  end
 end
