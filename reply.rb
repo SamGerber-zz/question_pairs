@@ -20,4 +20,55 @@ class Reply
     return nil if data.empty?
     self.new(data.first)
   end
+
+  def self.find_by_user_id( user_id )
+    data = QuestionsDatabase.instance.execute(<<-SQL, user_id)
+      SELECT
+        *
+      FROM
+        replies
+      WHERE
+        replies.user_id = ?
+    SQL
+
+    return nil if data.empty?
+    data.map do |row|
+      self.new(row)
+    end
+  end
+
+  def self.find_by_question_id( question_id )
+    data = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+      SELECT
+        *
+      FROM
+        replies
+      WHERE
+        replies.question_id = ?
+    SQL
+
+    return nil if data.empty?
+    data.map do |row|
+      self.new(row)
+    end
+  end
+
+  def author
+    User.find_by_id( user_id )
+  end
+
+  def question
+    Question.find_by_id( question_id )
+  end
+
+  def parent_reply
+    Reply.find_by_id( reply_id )
+  end
+
+  def child_replies
+    all_replies_to_question = Reply.find_by_question_id( question_id )
+    all_replies_to_question.select do |reply|
+      reply.reply_id == self.id
+    end
+  end
 end
