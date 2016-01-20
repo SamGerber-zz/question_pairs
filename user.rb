@@ -1,24 +1,16 @@
 require_relative 'schoo_database'
+require_relative 'model_base'
 
-class User
+class User < ModelBase
   attr_accessor :id, :fname, :lname
+  DB_TABLE = 'users'
+
+  def self.table
+    DB_TABLE
+  end
 
   def initialize( options = {} )
     @id, @fname, @lname = options.values_at( 'id', 'fname', 'lname')
-  end
-
-  def self.find_by_id( id )
-    data = QuestionsDatabase.instance.execute(<<-SQL, id)
-      SELECT
-        *
-      FROM
-        users
-      WHERE
-        users.id = ?
-    SQL
-
-    return nil if data.empty?
-    self.new(data.first)
   end
 
   def self.find_by_name( fname, lname )
@@ -31,10 +23,7 @@ class User
         users.fname = ? AND users.lname = ?
     SQL
 
-    return nil if data.empty?
-    data.map do |row|
-      self.new(row)
-    end
+    data.map { |row| self.new(row) }
   end
 
   def authored_questions
@@ -56,40 +45,16 @@ class User
   def average_karma
     data = QuestionsDatabase.instance.execute(<<-SQL)
       SELECT
-        CAST( COUNT( question_likes.id ) AS FLOAT) / COUNT( DISTINCT questions.id ) AS karma
+        CAST(COUNT(likes.id) AS FLOAT) / COUNT(DISTINCT q.id) AS karma
       FROM
-        questions
+        questions AS q
       LEFT OUTER JOIN
-        question_likes ON questions.id = question_likes.question_id
+        question_likes AS likes ON q.id = likes.question_id
       WHERE
-        questions.author_id = #{id};
+        q.author_id = 9;
+        q.author_id = #{id};
     SQL
+
     data.first['karma']
-  end
-
-  def save
-    id ? save_update : save_insert
-  end
-
-  def save_insert
-    QuestionsDatabase.instance.execute(<<-SQL, fname, lname)
-      INSERT INTO
-        users ( fname, lname )
-      VALUES
-        (?, ?)
-    SQL
-    self.id = QuestionsDatabase.instance.last_insert_row_id
-  end
-
-  def save_update
-    QuestionsDatabase.instance.execute(<<-SQL, fname, lname, id)
-      UPDATE
-        users
-      SET
-        fname = ?,
-        lname = ?
-      WHERE
-        users.id = ?
-    SQL
   end
 end

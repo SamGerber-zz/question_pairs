@@ -1,10 +1,19 @@
 require_relative 'schoo_database'
+require_relative 'model_base'
 
-class QuestionLike
+class QuestionLike < ModelBase
   attr_accessor :id, :user_id, :question_id
 
+  DB_TABLE = 'question_likes'
+
   def initialize( options = {} )
-    @id, @user_id, @question_id = options.values_at( 'id', 'user_id', 'question_id')
+    @id,
+    @user_id,
+    @question_id = options.values_at( 'id', 'user_id', 'question_id')
+  end
+
+  def self.table
+    DB_TABLE
   end
 
   def self.find_by_id( id )
@@ -46,6 +55,8 @@ class QuestionLike
       WHERE
         question_likes.question_id = ?
     SQL
+
+    return nil if data.empty?
     data.first['likes']
   end
 
@@ -60,6 +71,7 @@ class QuestionLike
       WHERE
         question_likes.user_id = ?
     SQL
+    
     data.map { |question| Question.new(question) }
   end
 
@@ -76,6 +88,7 @@ class QuestionLike
         likes DESC
       LIMIT ?;
     SQL
-    # data.map { |question| Question.new(question) }
+
+    data.map { |question| Question.new(question) }
   end
 end

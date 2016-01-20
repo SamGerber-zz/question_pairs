@@ -1,10 +1,13 @@
 require_relative 'schoo_database'
+require_relative 'model_base'
 
-class Reply
+class Reply < ModelBase
   attr_accessor :id, :question_id, :user_id, :reply_id, :body
 
-  def initialize( options = {} )
-    @id, @question_id, @user_id, @reply_id, @body = options.values_at( 'id', 'question_id', 'user_id', 'reply_id', 'body')
+  DB_TABLE = 'replies'
+
+  def self.table
+    DB_TABLE
   end
 
   def self.find_by_id( id )
@@ -31,10 +34,7 @@ class Reply
         replies.user_id = ?
     SQL
 
-    return nil if data.empty?
-    data.map do |row|
-      self.new(row)
-    end
+    data.map { |row| self.new(row) }
   end
 
   def self.find_by_question_id( question_id )
@@ -47,10 +47,19 @@ class Reply
         replies.question_id = ?
     SQL
 
-    return nil if data.empty?
-    data.map do |row|
-      self.new(row)
-    end
+    data.map { |row| self.new(row) }
+  end
+
+  def initialize( options = {} )
+    @id,
+    @question_id,
+    @user_id,
+    @reply_id,
+    @body = options.values_at( 'id',
+                               'question_id',
+                               'user_id',
+                               'reply_id',
+                               'body')
   end
 
   def author
@@ -67,36 +76,7 @@ class Reply
 
   def child_replies
     all_replies_to_question = Reply.find_by_question_id( question_id )
-    all_replies_to_question.select do |reply|
-      reply.reply_id == self.id
-    end
+    all_replies_to_question.select { |reply| reply.reply_id == id }
   end
 
-  def save
-    id ? save_update : save_insert
-  end
-
-  def save_insert
-    QuestionsDatabase.instance.execute(<<-SQL, question_id, user_id, reply_id, body)
-      INSERT INTO
-        replies ( question_id, user_id, reply_id, body )
-      VALUES
-        (?, ?, ?)
-    SQL
-    self.id = QuestionsDatabase.instance.last_insert_row_id
-  end
-
-  def save_update
-    QuestionsDatabase.instance.execute(<<-SQL, question_id, user_id, reply_id, body, id)
-      UPDATE
-        replies
-      SET
-        question_id = ?,
-        user_id = ?,
-        reply_id = ?,
-        body = ?
-      WHERE
-        replies.id = ?
-    SQL
-  end
 end

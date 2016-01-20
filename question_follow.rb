@@ -1,10 +1,19 @@
 require_relative 'schoo_database'
+require_relative 'model_base'
 
-class QuestionFollow
+class QuestionFollow < ModelBase
   attr_accessor :id, :user_id, :question_id
 
+  DB_TABLE = 'question_follows'
+
+  def self.table
+    DB_TABLE
+  end
+
   def initialize( options = {} )
-    @id, @user_id, @question_id = options.values_at( 'id', 'user_id', 'question_id')
+    @id,
+    @user_id, 
+    @question_id = options.values_at( 'id', 'user_id', 'question_id')
   end
 
   def self.find_by_id( id )
@@ -62,6 +71,6 @@ class QuestionFollow
         follows DESC
       LIMIT ?;
     SQL
-    # data.map { |question| Question.new(question) }
+    data.map { |question| Question.new(question) }
   end
 end

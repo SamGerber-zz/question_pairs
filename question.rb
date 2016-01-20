@@ -1,10 +1,13 @@
 require_relative 'schoo_database'
+require_relative 'model_base'
 
-class Question
+class Question < ModelBase
   attr_accessor :id, :title, :body, :author_id
 
-  def initialize( options = {} )
-    @id, @title, @body, @author_id = options.values_at( 'id', 'title', 'body', 'author_id')
+  DB_TABLE = 'questions'
+
+  def self.table
+    DB_TABLE
   end
 
   def self.find_by_id( id )
@@ -31,10 +34,22 @@ class Question
         questions.author_id = ?
     SQL
 
-    return nil if data.empty?
-    data.map do |row|
-      self.new( row )
-    end
+    data.map { |row| self.new( row ) }
+  end
+
+  def self.most_followed(n)
+    QuestionFollow.most_followed_questions(n)
+  end
+
+  def self.most_liked(n)
+    QuestionFollow.most_liked_questions(n)
+  end
+
+  def initialize( options = {} )
+    @id,
+    @title,
+    @body,
+    @author_id = options.values_at( 'id', 'title', 'body', 'author_id')
   end
 
   def author
@@ -49,16 +64,6 @@ class Question
     QuestionFollow.followers_for_question_id( id )
   end
 
-  def self.most_followed(n)
-    QuestionFollow.most_followed_questions(n)
-    #Maybe make array of Question elements
-  end
-
-  def self.most_liked(n)
-    QuestionFollow.most_liked_questions(n)
-    #Maybe make array of Question elements
-  end
-
   def likers
     QuestionLike.likers_for_question_id(id)
   end
@@ -67,31 +72,4 @@ class Question
     QuestionLike.num_likes_for_question_id(id)
   end
 
-
-  def save
-    id ? save_update : save_insert
-  end
-
-  def save_insert
-    QuestionsDatabase.instance.execute(<<-SQL, title, body, author_id)
-      INSERT INTO
-        questions ( title, body, author_id )
-      VALUES
-        (?, ?, ?)
-    SQL
-    self.id = QuestionsDatabase.instance.last_insert_row_id
-  end
-
-  def save_update
-    QuestionsDatabase.instance.execute(<<-SQL, title, body, author_id, id)
-      UPDATE
-        questions
-      SET
-        title = ?,
-        body = ?,
-        author_id = ?
-      WHERE
-        questions.id = ?
-    SQL
-  end
 end

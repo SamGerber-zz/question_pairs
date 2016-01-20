@@ -1,3 +1,4 @@
+load 'model_base.rb'
 load 'user.rb'
 load 'question.rb'
 load 'question_follow.rb'
